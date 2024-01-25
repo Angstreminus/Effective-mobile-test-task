@@ -9,7 +9,7 @@ import (
 	"github.com/jmoiron/sqlx"
 )
 
-func MustConnectDatabase(config *config.Config) (*sqlx.DB, error) {
+func NewDatabaseHandler(config *config.Config) (*sqlx.DB, error) {
 	ctxTimeout, ctxCancel := context.WithTimeout(context.Background(), time.Second*3)
 	defer ctxCancel()
 	db, err := sqlx.ConnectContext(ctxTimeout, "postgres", fmt.Sprintf("host=%s port=%s user=%s password=%s dbname=%s sslmode=%s",
