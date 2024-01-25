@@ -10,9 +10,7 @@ import (
 )
 
 type UserService struct {
-	Repo        *repository.UserRepository
-	Config *config.Config
-	// TODO repository
+	Repo *repository.UserRepository
 }
 
 func NewUserService(userRepo *repository.UserRepository) *UserService {
@@ -21,7 +19,7 @@ func NewUserService(userRepo *repository.UserRepository) *UserService {
 	}
 }
 
-func (us *UserService) GetAllUsers(cursor string, limit int, filters map[string]string) ([]entity.User, string, error) {
+func (us *UserService) GetAllUsers(cursor string, limit int, filters map[string]string) ([]entity.User, string, apperrors.AppError) {
 	return us.Repo.GetAllUsers(cursor, limit, filters)
 }
 
@@ -43,11 +41,35 @@ func (us *UserService) EditUser(uuid uuid.UUID, toEdit dto.UserEditRequest) (*en
 
 func (us *UserService) CreateUser(toCreate dto.UserRequest) (*entity.User, apperrors.AppError) {
 	var user entity.User
-
+	config, err := config.MustLoadConfig()
+	if err != nil {
+		return nil, &apperrors.GatewayOperationErr{
+			Message: err.Error(),
+		}
+	}
 	user.Name = toCreate.Name
 	user.Surname = toCreate.Surname
 	user.Patronymic = toCreate.Patronymic
-	user.Age, err := GetAge(user.Name, us.Repo.)
 
+	user.Age, err = GetAge(user.Name, config.AgeApiUrl)
+	if err != nil {
+		return nil, &apperrors.GatewayOperationErr{
+			Message: err.Error(),
+		}
+	}
+
+	user.Gender, err = GetGender(user.Name, config.GenderApiUrl)
+	if err != nil {
+		return nil, &apperrors.GatewayOperationErr{
+			Message: err.Error(),
+		}
+	}
+
+	user.Nationality, err = GetNationality(user.Name, config.NationApiUrl)
+	if err != nil {
+		return nil, &apperrors.GatewayOperationErr{
+			Message: err.Error(),
+		}
+	}
 	return us.Repo.CreateUser(&user)
 }

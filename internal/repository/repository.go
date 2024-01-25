@@ -31,8 +31,9 @@ func (ur *UserRepository) CreateUser(user *entity.User) (*entity.User, apperrors
 	var res entity.User
 	stmt, err := ur.DB.Prepare(query)
 	if err != nil {
-		// db op err
-		return nil, nil
+		return nil, &apperrors.DBoperationErr{
+			Message: err.Error(),
+		}
 	}
 	if err = stmt.QueryRow(
 		user.Name,
@@ -44,9 +45,13 @@ func (ur *UserRepository) CreateUser(user *entity.User) (*entity.User, apperrors
 		user.IsDeleted,
 		user.CreatedAt).Scan(&res.ID, &res.Name, &res.Surname, &res.Patronymic, &res.Age, &res.Gender, &res.Nationality, &res.IsDeleted, res.CreatedAt, res.UpdatedAt, res.DeletedAt); err != nil {
 		if err == sql.ErrNoRows {
-			return nil, nil
+			return nil, &apperrors.DBoperationErr{
+				Message: err.Error(),
+			}
 		}
-		return nil, nil
+		return nil, &apperrors.DBoperationErr{
+			Message: err.Error(),
+		}
 	}
 	return &res, nil
 }
@@ -60,8 +65,9 @@ func (ur *UserRepository) EditUser(user *entity.User) (*entity.User, apperrors.A
 	var res entity.User
 	stmt, err := ur.DB.Prepare(query)
 	if err != nil {
-		// db op err
-		return nil, nil
+		return nil, &apperrors.DBoperationErr{
+			Message: err.Error(),
+		}
 	}
 	if err = stmt.QueryRow(
 		user.Name,
@@ -73,9 +79,13 @@ func (ur *UserRepository) EditUser(user *entity.User) (*entity.User, apperrors.A
 		user.UpdatedAt,
 		user.ID).Scan(&res.ID, &res.Name, &res.Surname, &res.Patronymic, &res.Age, &res.Gender, &res.Nationality, &res.IsDeleted, res.CreatedAt, res.UpdatedAt, res.DeletedAt); err != nil {
 		if err == sql.ErrNoRows {
-			return nil, nil
+			return nil, &apperrors.DBoperationErr{
+				Message: err.Error(),
+			}
 		}
-		return nil, nil
+		return nil, &apperrors.DBoperationErr{
+			Message: err.Error(),
+		}
 	}
 	return &res, nil
 }
@@ -89,24 +99,31 @@ func (ur *UserRepository) DeleteUser(userID uuid.UUID) apperrors.AppError {
 	WHERE id::text=$3;`
 	stmt, err := ur.DB.Prepare(query)
 	if err != nil {
-		// db op err
-		return nil
+		return &apperrors.DBoperationErr{
+			Message: err.Error(),
+		}
 	}
 	row, err := stmt.Exec(isDeleted, deletedAt, userID)
 	if err != nil {
-		return nil
+		return &apperrors.DBoperationErr{
+			Message: err.Error(),
+		}
 	}
 	rowsAff, err := row.RowsAffected()
 	if err != nil {
-		return err
+		return &apperrors.DBoperationErr{
+			Message: err.Error(),
+		}
 	}
 	if rowsAff == 0 {
-		return nil
+		return &apperrors.DBoperationErr{
+			Message: "No rows affected",
+		}
 	}
 	return nil
 }
 
-func (ur *UserRepository) GetAllUsers(cursor string, limit int, filters map[string]string) ([]entity.User, string, error) {
+func (ur *UserRepository) GetAllUsers(cursor string, limit int, filters map[string]string) ([]entity.User, string, apperrors.AppError) {
 	query := `SELECT * FROM users WHERE `
 	args := []interface{}{}
 
@@ -125,7 +142,9 @@ func (ur *UserRepository) GetAllUsers(cursor string, limit int, filters map[stri
 
 	rows, err := ur.DB.Query(query, args...)
 	if err != nil {
-		return nil, "", err
+		return nil, "", &apperrors.DBoperationErr{
+			Message: err.Error(),
+		}
 	}
 	defer rows.Close()
 
@@ -136,7 +155,9 @@ func (ur *UserRepository) GetAllUsers(cursor string, limit int, filters map[stri
 		var user entity.User
 		err := rows.Scan(&user.ID, &user.Name, &user.Surname, &user.Patronymic, &user.Gender, &user.Nationality, &user.CreatedAt, &user.UpdatedAt, &user.DeletedAt, &user.Age, &user.IsDeleted)
 		if err != nil {
-			return nil, "", err
+			return nil, "", &apperrors.DBoperationErr{
+				Message: err.Error(),
+			}
 		}
 		users = append(users, user)
 		lastCreatedAt = user.CreatedAt

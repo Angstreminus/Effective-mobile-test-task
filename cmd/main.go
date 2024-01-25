@@ -1,13 +1,17 @@
 package main
 
 import (
-	"fmt"
-	"strings"
+	"log"
+
+	"github.com/Angstreminus/Effective-mobile-test-task/config"
+	"github.com/Angstreminus/Effective-mobile-test-task/internal/server"
 )
 
 func main() {
-	str := "http://localhost:8000/users/dsfsdfsdfsdfsdf4343123:2342"
-	arr := strings.Split(str, "/")
-	fmt.Println(arr[len(arr)-1])
-	// 2024-01-24 18:02:07.000
+	Config, err := config.MustLoadConfig()
+	if err != nil {
+		log.Fatal(err)
+	}
+	Server := server.NewServer(Config)
+	Server.MustRun()
 }
