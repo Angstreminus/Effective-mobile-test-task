@@ -22,6 +22,18 @@ func NewUserHandler(serv *service.UserService) *UserHandler {
 	}
 }
 
+func (uh UserHandler) UserHandler(w http.ResponseWriter, req *http.Request) {
+	if req.Method == http.MethodPost {
+		uh.CreateUserHandler(w, req)
+	} else if req.Method == http.MethodPut {
+		uh.EditUser(w, req)
+	} else if req.Method == http.MethodDelete {
+		uh.DeleteUserHandler(w, req)
+	} else if req.Method == http.MethodGet {
+		uh.GetUsersHandler(w, req)
+	}
+}
+
 func (uh *UserHandler) GetUsersHandler(w http.ResponseWriter, req *http.Request) {
 	cursor := req.URL.Query().Get("cursor")
 	limitStr := req.URL.Query().Get("limit")
@@ -101,7 +113,7 @@ func (uh *UserHandler) EditUser(w http.ResponseWriter, req *http.Request) {
 	json.NewEncoder(w).Encode(resp)
 }
 
-func (uh *UserHandler) CreateUser(w http.ResponseWriter, req *http.Request) {
+func (uh *UserHandler) CreateUserHandler(w http.ResponseWriter, req *http.Request) {
 	var toCreate dto.UserRequest
 	err := json.NewDecoder(req.Body).Decode(&toCreate)
 	if err != nil {

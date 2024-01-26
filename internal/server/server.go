@@ -30,9 +30,5 @@ func (s *Server) MustRun() {
 	repo := repository.NewUserRepository(dbHandler)
 	service := service.NewUserService(repo)
 	handler := handler.NewUserHandler(service)
-	s.Router.HandleFunc("/users/create", handler.CreateUser)
-	s.Router.HandleFunc("/users", handler.GetUsersHandler)
-	if err = http.ListenAndServe(s.Config.ServerAddr, nil); err != nil {
-		log.Fatal(err)
-	}
+	s.Router.HandleFunc("/users", handler.UserHandler)
 }
